@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+/* Prevent layout jumping when mobile keyboard opens */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* Smooth scroll on mobile */
+* {
+  -webkit-overflow-scrolling: touch;
+}
