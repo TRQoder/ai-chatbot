@@ -37,7 +37,7 @@ const io = new Server(httpServer, {
 //   }
 // ];
 
-const chatHistory = [];
+const chatHistory = []; 
 
 io.on("connection", (socket) => {
   // ...
@@ -63,6 +63,6 @@ io.on("connection", (socket) => {
   });
 });
 
-httpServer.listen(3000, () => {
+httpServer.listen(process.env.PORT, () => {
   console.log("server is running on port 3000");
 });
