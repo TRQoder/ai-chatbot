@@ -41,11 +41,13 @@ const io = new Server(httpServer, {
 //   }
 // ];
 
-const chatHistory = []; 
+
+
 
 io.on("connection", (socket) => {
   // ...
   // console.log("connected");
+  const chatHistory = []; // 👈 now private for this socket only
 
   socket.on("prompt", async (data) => {
     chatHistory.push({
