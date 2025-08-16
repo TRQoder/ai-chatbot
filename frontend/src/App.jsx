@@ -11,37 +11,49 @@ export default function App() {
   const [isTyping, setIsTyping] = useState(false);
   const chatEndRef = useRef(null);
 
-
-
   useEffect(() => {
-    // socket.connect() socket.js me autoconnect true h to iski koi zarurat nhi h
     socket.on("ai-response", (data) => {
-      const botMessage = { text: data, sender: "bot" }
+      const botMessage = { text: data, sender: "bot" };
       setMessages((prev) => [...prev, botMessage]);
       setIsTyping(false);
-    })
+    });
 
     return () => {
       socket.off("ai-response");
-      socket.disconnect();  // cleanup
-    }
-
-  }, [])
+      socket.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
+  // ✅ Handle mobile keyboard resize
+  useEffect(() => {
+    const handleResize = () => {
+      document.documentElement.style.setProperty(
+        "--app-height",
+        `${window.innerHeight}px`
+      );
+    };
+    window.addEventListener("resize", handleResize);
+    handleResize(); // run once at mount
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const sendMessage = () => {
     if (!input.trim()) return;
     setMessages((prev) => [...prev, { text: input, sender: "user" }]);
-    socket.emit('prompt', input)
+    socket.emit("prompt", input);
     setInput("");
     setIsTyping(true);
   };
 
   return (
-    <div className="h-screen flex items-center justify-center bg-[#0a0a0a]">
+    <div
+      className="flex items-center justify-center bg-[#0a0a0a]"
+      style={{ height: "var(--app-height, 100dvh)" }} // ✅ dynamic height fix
+    >
       <div className="flex flex-col w-full h-full md:h-[95%] md:w-[430px] bg-[#111] bg-opacity-90 backdrop-blur-md shadow-[0_0_25px_rgba(0,0,0,0.6)] md:rounded-2xl overflow-hidden border border-gray-800">
 
         {/* HEADER */}
@@ -52,41 +64,36 @@ export default function App() {
             className="w-11 h-11 rounded-full border border-purple-500 shadow-lg"
             initial={{ scale: 1 }}
             animate={{
-              scale: [1, 1.1, 1],  // zoom in then out
-              rotate: [0, -3, 3, 0], // tiny tilt for extra life (optional)
+              scale: [1, 1.1, 1],
+              rotate: [0, -3, 3, 0],
             }}
             transition={{
               duration: 2.5,
               repeat: Infinity,
-              ease: "easeInOut"
+              ease: "easeInOut",
             }}
           />
-
           <h1 className="text-lg font-semibold tracking-wide">AI Chatbot</h1>
         </div>
 
         {/* CHAT MESSAGES */}
         <div className="flex-1 overflow-y-auto px-3 py-3 bg-[#0d0d0d] custom-scrollbar">
-
           {messages.length === 0 && !isTyping && (
             <div className="h-full flex flex-col items-center justify-center text-gray-400 gap-4">
-              {/* Animated Robot */}
               <motion.img
                 src={robot}
                 alt="AI Chatbot"
                 className="w-16 h-16 rounded-full border border-purple-500 shadow-lg"
                 animate={{
                   scale: [1, 1.1, 1],
-                  y: [0, -8, 0]
+                  y: [0, -8, 0],
                 }}
                 transition={{
                   duration: 2,
                   repeat: Infinity,
-                  ease: "easeInOut"
+                  ease: "easeInOut",
                 }}
               />
-
-              {/* Animated Text */}
               <motion.p
                 className="text-sm text-gray-400 text-center max-w-[220px]"
                 initial={{ opacity: 0 }}
@@ -99,7 +106,6 @@ export default function App() {
             </div>
           )}
 
-
           <AnimatePresence>
             {messages.map((msg, idx) => (
               <motion.div
@@ -108,13 +114,16 @@ export default function App() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.25 }}
-                className={`my-1 flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
+                className={`my-1 flex ${
+                  msg.sender === "user" ? "justify-end" : "justify-start"
+                }`}
               >
                 <div
-                  className={`px-4 py-2 rounded-2xl max-w-[75%] text-sm shadow-lg ${msg.sender === "user"
-                    ? "bg-gradient-to-r from-purple-500 to-indigo-600 text-white"
-                    : "bg-[#1e1e1e] text-gray-200 border border-gray-800"
-                    }`}
+                  className={`px-4 py-2 rounded-2xl max-w-[75%] text-sm shadow-lg ${
+                    msg.sender === "user"
+                      ? "bg-gradient-to-r from-purple-500 to-indigo-600 text-white"
+                      : "bg-[#1e1e1e] text-gray-200 border border-gray-800"
+                  }`}
                 >
                   {msg.text}
                 </div>
@@ -122,7 +131,6 @@ export default function App() {
             ))}
           </AnimatePresence>
 
-          {/* Typing Indicator */}
           {isTyping && (
             <div className="flex justify-start my-2">
               <div className="px-4 py-2 rounded-2xl bg-[#1e1e1e] border border-gray-800 text-gray-400 text-sm flex gap-1">
@@ -132,12 +140,11 @@ export default function App() {
               </div>
             </div>
           )}
-
           <div ref={chatEndRef} />
         </div>
 
-        {/* INPUT */}
-        <div className="p-3 bg-[#161616] flex items-center gap-2 border-t border-gray-800">
+        {/* ✅ INPUT (sticky at bottom) */}
+        <div className="p-3 bg-[#161616] flex items-center gap-2 border-t border-gray-800 sticky bottom-0">
           <input
             type="text"
             className="flex-1 px-4 py-2 rounded-full border border-gray-700 bg-[#0d0d0d] text-white outline-none text-sm focus:border-purple-500 transition-all placeholder-gray-400"
@@ -145,8 +152,10 @@ export default function App() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+            onFocus={() =>
+              setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 300)
+            } // ✅ auto-scroll when keyboard opens
           />
-          {/* SEND BUTTON */}
           <motion.button
             whileTap={{ scale: 0.8 }}
             whileHover={{ scale: 1.05 }}
