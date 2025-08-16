@@ -4,6 +4,8 @@ const { createServer } = require("http");
 const { Server } = require("socket.io");
 const generateAiResponse = require("./src/services/ai.services");
 
+const PORT = process.env.PORT
+
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors : {
@@ -43,7 +45,7 @@ const chatHistory = [];
 
 io.on("connection", (socket) => {
   // ...
-  console.log("connected");
+  // console.log("connected");
 
   socket.on("prompt", async (data) => {
     chatHistory.push({
@@ -51,8 +53,8 @@ io.on("connection", (socket) => {
       parts : [{text : data}]
     })
     const res = await generateAiResponse(chatHistory);
-    console.log("user :", data);
-    console.log("ai :", res);
+    // console.log("user :", data);
+    // console.log("ai :", res);
     socket.emit("ai-response", res);
     chatHistory.push({
       role : "model",
@@ -61,10 +63,10 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    console.log("disconnected");
+    // console.log("disconnected");
   });
 });
 
-httpServer.listen(process.env.PORT, () => {
-  console.log("server is running on port 3000");
+httpServer.listen(PORT, () => {
+  console.log(`server is running on port ${PORT} `);
 });
