@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import robot from "./assets/robot.png";
 import "./index.css";
 import { socket } from "./services/socket";
+import ReactMarkdown from "react-markdown";
+
 
 export default function App() {
   const [messages, setMessages] = useState([]);
@@ -125,7 +127,7 @@ export default function App() {
                       : "bg-[#1e1e1e] text-gray-200 border border-gray-800"
                   }`}
                 >
-                  {msg.text}
+                  <ReactMarkdown>{msg.text}</ReactMarkdown>
                 </div>
               </motion.div>
             ))}
