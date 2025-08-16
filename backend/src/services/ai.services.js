@@ -44,7 +44,8 @@ const ai = new GoogleGenAI({});
  */
 const generateAiResponse = async (promptOrChatHistory) => {
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
+    // model: "gemini-2.5-flash",  // 10rpm 250 rpd
+    model : "gemini-2.5-flash-lite", // 15 rpm 1000rpd
     contents: promptOrChatHistory,
   });
 
@@ -52,3 +53,4 @@ const generateAiResponse = async (promptOrChatHistory) => {
 };
 
 module.exports = generateAiResponse;
+
