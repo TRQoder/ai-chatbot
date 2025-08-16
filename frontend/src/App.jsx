@@ -3,14 +3,30 @@ import { IoSend } from "react-icons/io5";
 import { motion, AnimatePresence } from "framer-motion";
 import robot from "./assets/robot.png";
 import "./index.css";
+import { socket } from "./services/socket";
 
 export default function App() {
-  const [messages, setMessages] = useState([
-    { text: "Hello! I am your AI Chatbot 🤖", sender: "bot" }
-  ]);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const chatEndRef = useRef(null);
+
+
+
+  useEffect(() => {
+    // socket.connect() socket.js me autoconnect true h to iski koi zarurat nhi h
+    socket.on("ai-response", (data) => {
+      const botMessage = { text: data, sender: "bot" }
+      setMessages((prev) => [...prev, botMessage]);
+      setIsTyping(false);
+    })
+
+    return () => {
+      socket.off("ai-response");
+      socket.disconnect();  // cleanup
+    }
+
+  }, [])
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -18,19 +34,10 @@ export default function App() {
 
   const sendMessage = () => {
     if (!input.trim()) return;
-
     setMessages((prev) => [...prev, { text: input, sender: "user" }]);
-    setIsTyping(true);
-
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        { text: "Got it! Let me process that...", sender: "bot" }
-      ]);
-      setIsTyping(false);
-    }, 1000);
-
+    socket.emit('prompt', input)
     setInput("");
+    setIsTyping(true);
   };
 
   return (
@@ -43,31 +50,71 @@ export default function App() {
             src={robot}
             alt="AI Chatbot"
             className="w-11 h-11 rounded-full border border-purple-500 shadow-lg"
-            initial={{ rotate: -10, scale: 0.9 }}
-            animate={{ rotate: 0, scale: 1 }}
-            transition={{ duration: 0.4 }}
+            initial={{ scale: 1 }}
+            animate={{
+              scale: [1, 1.1, 1],  // zoom in then out
+              rotate: [0, -3, 3, 0], // tiny tilt for extra life (optional)
+            }}
+            transition={{
+              duration: 2.5,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
           />
+
           <h1 className="text-lg font-semibold tracking-wide">AI Chatbot</h1>
         </div>
 
         {/* CHAT MESSAGES */}
         <div className="flex-1 overflow-y-auto px-3 py-3 bg-[#0d0d0d] custom-scrollbar">
+
+          {messages.length === 0 && !isTyping && (
+            <div className="h-full flex flex-col items-center justify-center text-gray-400 gap-4">
+              {/* Animated Robot */}
+              <motion.img
+                src={robot}
+                alt="AI Chatbot"
+                className="w-16 h-16 rounded-full border border-purple-500 shadow-lg"
+                animate={{
+                  scale: [1, 1.1, 1],
+                  y: [0, -8, 0]
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              />
+
+              {/* Animated Text */}
+              <motion.p
+                className="text-sm text-gray-400 text-center max-w-[220px]"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: [0, 1, 0.7, 1] }}
+                transition={{ duration: 3, repeat: Infinity }}
+              >
+                👋 No messages yet…
+                <br /> Type something to start the conversation!
+              </motion.p>
+            </div>
+          )}
+
+
           <AnimatePresence>
             {messages.map((msg, idx) => (
               <motion.div
                 key={idx}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
+                initial={{ opacity: 0, y: 15, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.25 }}
                 className={`my-1 flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`px-4 py-2 rounded-2xl max-w-[75%] text-sm shadow-lg ${
-                    msg.sender === "user"
-                      ? "bg-gradient-to-r from-purple-500 to-indigo-600 text-white"
-                      : "bg-[#1e1e1e] text-gray-200 border border-gray-800"
-                  }`}
+                  className={`px-4 py-2 rounded-2xl max-w-[75%] text-sm shadow-lg ${msg.sender === "user"
+                    ? "bg-gradient-to-r from-purple-500 to-indigo-600 text-white"
+                    : "bg-[#1e1e1e] text-gray-200 border border-gray-800"
+                    }`}
                 >
                   {msg.text}
                 </div>
@@ -99,8 +146,9 @@ export default function App() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && sendMessage()}
           />
+          {/* SEND BUTTON */}
           <motion.button
-            whileTap={{ scale: 0.9 }}
+            whileTap={{ scale: 0.8 }}
             whileHover={{ scale: 1.05 }}
             onClick={sendMessage}
             className="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-indigo-500 hover:to-purple-500 p-3 rounded-full text-white shadow-lg transition-all"

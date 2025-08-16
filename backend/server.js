@@ -6,7 +6,9 @@ const generateAiResponse = require("./src/services/ai.services");
 
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
-  /* options */
+  cors : {
+    origin:process.env.CLIENT_URL
+  }
 });
 
 // const chatHistory = [
